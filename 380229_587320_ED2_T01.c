@@ -604,7 +604,7 @@ long liberar(RegistroPrim **idxPrim, RegistroWin **idxWin, RegistroMvp **idxMvp,
         if((*idxPrim)[i].rrn == -1){
             for (j = 0; j < count; j++) {
                 if (strcmp((*idxPrim)[i].codigo, (*idxWin)[j].codigo) == 0) {
-                    for (k = j + 1; j < count; k++) {
+                    for (k = j + 1; k < count; k++) {
                         (*idxWin)[k - 1] = (*idxWin)[k];
                     }
                 }
@@ -612,7 +612,7 @@ long liberar(RegistroPrim **idxPrim, RegistroWin **idxWin, RegistroMvp **idxMvp,
 
             for (j = 0; j < count; j++) {
                 if (strcmp((*idxPrim)[i].codigo, (*idxMvp)[j].codigo) == 0) {
-                    for (k = j + 1; j < count; k++) {
+                    for (k = j + 1; k < count; k++) {
                         (*idxMvp)[k - 1] = (*idxMvp)[k];
                     }
                 }
