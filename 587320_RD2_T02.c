@@ -239,6 +239,29 @@ void exibir_registro(int rrn) {
 }
 
 /* <<< IMPLEMENTE AQUI AS FUNCOES >>> */
+void insete_aux(node_Btree *node, Chave *chave) {
+	int i;
+
+	if (node->folha) {
+		if (node->num_chaves < m - 1) {
+			i = node->num_chaves - 1;
+			while (i >= 0 && (strcmp(chave->pk, node->chave[i]->pk) < 0)) {
+				node->chave[i + 1] = node->chave[i];
+				i--;
+			}
+			node->chave[i +1] = chave;
+			node->num_chaves = node->num_chaves + 1;
+
+			chavePromovida = NULL;
+			filhoDireito = NULL;
+		} else {
+			return //divide_no
+		}
+	} else{
+		
+	}
+}
+
 void insere(*iprimary, Chave *chave) {
 	node_Btree *novo;
 
