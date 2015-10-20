@@ -239,38 +239,77 @@ void exibir_registro(int rrn) {
 }
 
 /* <<< IMPLEMENTE AQUI AS FUNCOES >>> */
-int compareIwinner(const void * a, const void * b){
+void insere(*iprimary, Chave *chave) {
+	node_Btree *novo;
+
+	if (iprimary->raiz == NULL) {
+		novo = (node_Btree *) malloc(sizeof(node_Btree));
+		novo.folha = 1;
+		novo.num_chaves = 1;
+		novo.chaves = (Chave *) malloc((m - 1) * sizeof(Chave));
+		novo.desc = (node_Btree**) malloc(m * sizeof(node_Btree*));
+		novo.chaves[0] = *chave;
+		iprimary->raiz = novo;
+	} else {
+		//insere aux
+
+		if (chavePromovida != NULL) {
+			novo = (node_Btree *) malloc(sizeof(node_Btree));
+			novo.folha = 0;
+			novo.num_chaves = 1;
+			*novo.chaves = (Chave *) malloc((m - 1) * sizeof(Chave));
+			novo.desc = (node_Btree**) malloc(m * sizeof(node_Btree*));
+			novo.chaves[0] = chavePromovida;
+			novo.desc[0] = raiz;
+			novo.desc[1] = filhoDireito;
+			raiz = novo;
+		}
+	}
+}
+
+int compareIwinner(const void * a, const void * b) {
     Iwinner *elem1 = (Iwinner*)a;
 	Iwinner *elem2 = (Iwinner*)b;
 
     return strcmp(elem1->vencedor, elem2->vencedor);
 }
 
-int compareImvp(const void * a, const void * b){
+int compareImvp(const void * a, const void * b) {
     Imvp *elem1 = (Imvp*)a;
 	Imvp *elem2 = (Imvp*)b;
 
     return strcmp(elem1->mvp, elem2->mvp);
 }
 
-void criar_iwinner(Iwinner iwinner, int nregistros) {
-	Partida p;
-	int i, j;
+void criar_iprimary(Iprimary *iprimary, int nregistros, int ordem) {
 	char aux[TAM_REGISTRO + 1], lixo[40];
+	Chave aux;
+	int i, j;
+	Partida p;
 
 	for (i = 0, j = 0; j < nregistros; i + 192, j++) {
 		*aux = ARQUIVO + i;
-		sscanf(aux, "%[^@]%*c%[^@]%*c%[^@]%*c%[^@]%*c%[^@]%*c%[^@]%*c%[^@]%*c%[^@]%*c%[^@]%*c", p.pk, lixo, lixo, lixo, lixo, p.vencedor, lixo, lixo, lixo);
-		strcpy(iwinner[j].vencedor, p.vencedor);
-		strcpy(iwinner[j].pk, p.codigo);
+		sscanf(aux, "%[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c", aux.pk);
+		aux.rrn = i;
+	}
+}
+
+void criar_iwinner(Iwinner iwinner, int nregistros) {
+	char aux[TAM_REGISTRO + 1], lixo[40];
+	int i, j;
+	Partida p;
+
+	for (i = 0, j = 0; j < nregistros; i + 192, j++) {
+		*aux = ARQUIVO + i;
+		sscanf(aux, "%[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c%[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c", iwinner[j].pk, lixo, lixo, lixo, lixo, iwinner[j].vencedor, lixo, lixo, lixo);
 	}
 	qsort(iwinner, nregistros, sizeof(Iwinner), compareIwinner);
 }
 
 void criar_imvp(Imvp imvp, int nregistros) {
-	Partida p;
-	int i, j;
 	char aux[TAM_REGISTRO + 1], lixo[40];
+	int i, j;
+	Partida p;
 
 	for (i = 0, j = 0; j < nregistros; i + 192, j++) {
 		*aux = ARQUIVO + i;
