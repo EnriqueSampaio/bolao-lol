@@ -99,10 +99,10 @@ void exibir_registro(int rrn);
 
 /* <<< DECLARE AQUI OS PROTOTIPOS >>> */
 /* Divide nó de promove uma chave */
-void divide_no(node_Btree *no, Chave *chave, node_Btree **filhoDireito, Chave **chavePromovida);
+node_Btree* divide_no(node_Btree **no, Chave *chave, node_Btree **filhoDireito, Chave **chavePromovida);
 
 /* Abre espaço no registro para o novo nó */
-void insere_aux(node_Btree *no, Chave *chave, node_Btree **filhoDireito, Chave **chavePromovida);
+node_Btree* insere_aux(node_Btree **no, Chave *chave, Chave **chavePromovida);
 
 /* Insere nó na árvore B*/
 void insere(Iprimary *iprimary, Chave *chave);
@@ -266,20 +266,20 @@ void exibir_registro(int rrn) {
 }
 
 /* <<< IMPLEMENTE AQUI AS FUNCOES >>> */
-void divide_no(node_Btree *no, Chave *chave, node_Btree **filhoDireito, Chave **chavePromovida) {
+node_Btree* divide_no(node_Btree **no, Chave *chave, node_Btree **filhoDireito, Chave **chavePromovida) {
 	int i, j, chaveAlocada;
 	node_Btree *novo;
 
-	i = no->num_chaves;
+	i = (*no)->num_chaves - 1;
 	chaveAlocada = 0;
 	novo = (node_Btree *) malloc(sizeof(node_Btree));
 	novo->chave = (Chave *) malloc((M - 1) * sizeof(Chave));
 	novo->desc = (node_Btree**) malloc(M * sizeof(node_Btree*));
-	novo->folha = no->folha;
+	novo->folha = (*no)->folha;
 	novo->num_chaves = (M - 1) / 2;
 
 	for (j = novo->num_chaves - 1; j >= 0; j--) {
-		if (!chaveAlocada && (strcmp(chave->pk, no->chave[i].pk) > 0)) {
+		if (!chaveAlocada && (strcmp(chave->pk, (*no)->chave[i].pk) > 0)) {
 			novo->chave[j] = *chave;
 			if (filhoDireito != NULL) {
 				novo->desc[j + 1] = (*filhoDireito);
@@ -288,79 +288,79 @@ void divide_no(node_Btree *no, Chave *chave, node_Btree **filhoDireito, Chave **
 			}
 			chaveAlocada = 1;
 		} else {
-			novo->chave[j] = no->chave[i];
-			novo->desc[j + 1] = no->desc[i + 1];
+			novo->chave[j] = (*no)->chave[i];
+			novo->desc[j + 1] = (*no)->desc[i + 1];
 			i--;
 		}
 	}
 
 	if (!chaveAlocada) {
-		while (i >= 0 && (strcmp(chave->pk, no->chave[i].pk) < 0)) {
-			no->chave[i + 1] = no->chave[i];
-			no->desc[i + 2] = no->desc[i + 1];
+		while (i >= 0 && (strcmp(chave->pk, (*no)->chave[i].pk) < 0)) {
+			(*no)->chave[i + 1] = (*no)->chave[i];
+			(*no)->desc[i + 2] = (*no)->desc[i + 1];
 			i--;
 		}
-		no->chave[i + 1] = *chave;
-		no->desc[i + 2] = (*filhoDireito);
+		(*no)->chave[i + 1] = *chave;
+		(*no)->desc[i + 2] = (*filhoDireito);
 	}
 
-	**chavePromovida = no->chave[(M/2) + 1];
-	novo->desc[1] = no->desc[(M/2) + 2];
-	no->num_chaves = M / 2;
-	filhoDireito = &novo;
+	**chavePromovida = (*no)->chave[(M/2)];
+	novo->desc[1] = (*no)->desc[(M/2) + 1];
+	(*no)->num_chaves = M / 2;
+	return novo;
 }
 
-void insere_aux(node_Btree *no, Chave *chave, node_Btree **filhoDireito, Chave **chavePromovida) {
+node_Btree* insere_aux(node_Btree **no, Chave *chave, Chave **chavePromovida) {
 	int i;
+	node_Btree *filhoDireito;
 
-	if (no->folha) {
-		if (no->num_chaves < M - 1) {
-			i = no->num_chaves - 1;
-			while (i >= 0 && (strcmp(chave->pk, no->chave[i].pk) < 0)) {
-				no->chave[i + 1] = no->chave[i];
+	if ((*no)->folha) {
+		if ((*no)->num_chaves < M - 1) {
+			i = (*no)->num_chaves - 1;
+			while (i >= 0 && (strcmp(chave->pk, (*no)->chave[i].pk) < 0)) {
+				(*no)->chave[i + 1] = (*no)->chave[i];
 				i--;
 			}
-			no->chave[i +1] = *chave;
-			no->num_chaves = no->num_chaves + 1;
+			(*no)->chave[i +1] = *chave;
+			(*no)->num_chaves = (*no)->num_chaves + 1;
 			(*chavePromovida) = NULL;
-			(*filhoDireito) = NULL;
+			return NULL;
 		} else {
-			divide_no(no, chave, NULL, chavePromovida);
+			return divide_no(no, chave, NULL, chavePromovida);
 		}
 	} else{
-		printf("%d\n", no->num_chaves);
-		i = no->num_chaves;
-		while (i >= 0 && (strcmp(chave->pk, no->chave[i].pk) < 0)) {
+		i = (*no)->num_chaves - 1;
+		while (i >= 0 && (strcmp(chave->pk, (*no)->chave[i].pk) < 0)) {
 			i--;
 		}
 		i++;
+		filhoDireito = (node_Btree *) malloc(sizeof(node_Btree));
+		filhoDireito = insere_aux(&(*no)->desc[i], chave, chavePromovida);
 
-		insere_aux(no->desc[i], chave, filhoDireito, chavePromovida);
-
-		if (chavePromovida != NULL) {
+		if ((*chavePromovida) != NULL) {
 			chave = (*chavePromovida);
-			if (no->num_chaves < M - 1) {
-				i = no->num_chaves - 1;
-				while (i >= 0 && (strcmp(chave->pk, no->chave[i].pk) < 0)) {
-					no->chave[i + 1] = no->chave[i];
-					no->desc[i + 2] = no->desc[i + 1];
+			if ((*no)->num_chaves < M - 1) {
+				i = (*no)->num_chaves - 1;
+				while (i >= 0 && (strcmp(chave->pk, (*no)->chave[i].pk) < 0)) {
+					(*no)->chave[i + 1] = (*no)->chave[i];
+					(*no)->desc[i + 2] = (*no)->desc[i + 1];
 					i--;
 				}
-				no->chave[i + 1] = *chave;
+				(*no)->chave[i + 1] = *chave;
 				if (filhoDireito != NULL) {
-					no->desc[i + 2] = (*filhoDireito);
+					(*no)->desc[i + 2] = filhoDireito;
 				} else {
-					no->desc[i + 2] = NULL;
+					(*no)->desc[i + 2] = NULL;
 				}
-				no->num_chaves++;
+				(*no)->num_chaves++;
 				chavePromovida = NULL;
-				filhoDireito = NULL;
+				return NULL;
 			} else {
-				divide_no(no, chave, filhoDireito, chavePromovida);
+				return divide_no(no, chave, &filhoDireito, chavePromovida);
 			}
 		} else {
 			chavePromovida = NULL;
-			filhoDireito = NULL;
+			return NULL;
 		}
 	}
 }
@@ -378,7 +378,8 @@ void insere(Iprimary *iprimary, Chave *chave) {
 		novo->chave[0] = *chave;
 		iprimary->raiz = novo;
 	} else {
-		insere_aux(iprimary->raiz, chave, &filhoDireito, &chavePromovida);
+		filhoDireito = malloc(sizeof(node_Btree));
+		filhoDireito = insere_aux(&iprimary->raiz, chave, &chavePromovida);
 		if (chavePromovida != NULL) {
 			novo = (node_Btree *) malloc(sizeof(node_Btree));
 			novo->folha = 0;
@@ -393,7 +394,25 @@ void insere(Iprimary *iprimary, Chave *chave) {
 	}
 }
 
-Partida recuperar_registro(int rrn){
+node_Btree* buscar_arvore(node_Btree **no, char pk[]) {
+	int i = 0;
+
+	while (i < (*no)->num_chaves && strcmp(pk, (*no)->chave[i].pk) > 0) {
+		i++;
+	}
+
+	if (i < (*no)->num_chaves && strcmp(pk, (*no)->chave[i].pk) == 0) {
+		return (*no);
+	}
+
+	if ((*no)->folha) {
+		return NULL;
+	} else {
+		return buscar_arvore(&(*no)->desc[i], pk);
+	}
+}
+
+Partida recuperar_registro(int rrn) {
 	char buffer[TAM_REGISTRO +1];
 	Partida p;
 
@@ -423,6 +442,7 @@ void criar_iprimary(Iprimary *iprimary, int nregistros, int ordem) {
 void criar_iwinner(Iwinner *iwinner, int nregistros) {
 	char buffer[TAM_REGISTRO + 1];
 	int i, j;
+	Iwinner temp;
 
 	i = 0;
 	for (j = 0; j < nregistros; j++) {
@@ -430,12 +450,21 @@ void criar_iwinner(Iwinner *iwinner, int nregistros) {
 		sscanf(buffer, "%[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c%[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c", iwinner[j].pk, iwinner[j].vencedor);
 		i+= 192;
 	}
-	//PRECISA ORDENAR
+	for (i = 0; i < nregistros; i++) {
+		temp = iwinner[i];
+		j = i - 1;
+		while (j >= 0 && strcmp(temp.vencedor, iwinner[j].vencedor)) {
+			iwinner[j+1] = iwinner[j];
+			j--;
+		}
+		iwinner[j+1] = temp;
+	}
 }
 
 void criar_imvp(Imvp *imvp, int nregistros) {
 	char buffer[TAM_REGISTRO + 1];
 	int i, j;
+	Imvp temp;
 
 	i = 0;
 	for (j = 0; j < nregistros; j++) {
@@ -443,7 +472,15 @@ void criar_imvp(Imvp *imvp, int nregistros) {
 		sscanf(buffer, "%[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c%*[^@]%*c%[^@]%*c", imvp[j].pk, imvp[j].mvp);
 		i+= 192;
 	}
-	//PRECISA ORDENAR
+	for (i = 0; i < nregistros; i++) {
+		temp = imvp[i];
+		j = i - 1;
+		while (j >= 0 && strcmp(temp.mvp, imvp[j].mvp)) {
+			imvp[j+1] = imvp[j];
+			j--;
+		}
+		imvp[j+1] = temp;
+	}
 }
 
 void meuGet(char string[], char erro[], int limite){
@@ -572,6 +609,9 @@ void cadastrar(Iprimary *iprimary, Iwinner *iwinner, Imvp *imvp, int *nregistros
 	Partida p;
     char registro[193];
 	Chave chave;
+	Imvp tempMvp;
+	int i, j;
+	Iwinner tempWin;
 
     registro[0] = '\0';
 
@@ -625,7 +665,24 @@ void cadastrar(Iprimary *iprimary, Iwinner *iwinner, Imvp *imvp, int *nregistros
         strcpy(imvp[*nregistros].mvp, p.mvp);
         strcpy(imvp[*nregistros].pk, p.pk);
 		*nregistros++;
-		//PRECISA ORDENAR
+		for (i = 0; i < *nregistros; i++) {
+			tempWin = iwinner[i];
+			j = i - 1;
+			while (j >= 0 && strcmp(tempWin.vencedor, iwinner[j].vencedor)) {
+				iwinner[j+1] = iwinner[j];
+				j--;
+			}
+			iwinner[j+1] = tempWin;
+		}
+		for (i = 0; i < *nregistros; i++) {
+			tempMvp = imvp[i];
+			j = i - 1;
+			while (j >= 0 && strcmp(tempMvp.mvp, imvp[j].mvp)) {
+				imvp[j+1] = imvp[j];
+				j--;
+			}
+			imvp[j+1] = tempMvp;
+		}
     } else{
         printf(ERRO_PK_REPETIDA, p.pk);
     }
@@ -636,7 +693,26 @@ void alterar(Iprimary iprimary) {
 }
 
 void buscar(Iprimary iprimary, Iwinner *iwinner, Imvp *imvp, int nregistros) {
+	char pk[9];
+	int opcao, i;
+	node_Btree *no;
 
+	scanf("%d", &opcao);
+	switch (opcao) {
+		case 1:
+			scanf("%[^\n]%*c", pk);
+			no = (node_Btree *) malloc(sizeof(node_Btree));
+			no = buscar_arvore(&iprimary.raiz, pk);
+			if (no != NULL) {
+				for (i = 0; i < no->num_chaves; i++) {
+					if (strcmp(no->chave[i].pk, pk) == 0) {
+						//recupepra registro
+					}
+				}
+			} else {
+				printf(REGISTRO_N_ENCONTRADO);
+			}
+	}
 }
 
 void listar(Iprimary iprimary, Iwinner *iwinner, Imvp *imvp, int nregistros) {
