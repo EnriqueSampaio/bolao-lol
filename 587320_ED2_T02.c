@@ -701,7 +701,7 @@ int verificarChave(Iprimary *iprimary, char pk[]){
 
 void cadastrar(Iprimary *iprimary, Iwinner *iwinner, Imvp *imvp, int *nregistros) {
 	Partida p;
-    char registro[193];
+    char registro[193], *buffer;
 	Chave chave;
 	Imvp tempMvp;
 	int i, j;
@@ -750,7 +750,8 @@ void cadastrar(Iprimary *iprimary, Iwinner *iwinner, Imvp *imvp, int *nregistros
 
     if(verificarChave(iprimary, p.pk)) {
         criarRegistro(&p, registro);
-		sprintf(ARQUIVO, "%s", registro);
+		buffer = ARQUIVO + strlen(ARQUIVO);
+		sprintf(buffer, "%s", registro);
 		strcpy(chave.pk, p.pk);
 		chave.rrn = *nregistros * 192;
 		insere(iprimary, &chave);
