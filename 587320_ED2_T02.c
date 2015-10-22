@@ -469,7 +469,6 @@ void buscar_vencedor(Iprimary *iprimary, Iwinner *iwinner, char vencedor[], int 
 	if (flag) {
 		printf(REGISTRO_N_ENCONTRADO);
 	}
-	free(no);
 }
 
 void buscar_mvp(Iprimary *iprimary, Imvp *imvp, char mvp[], int nregistros) {
@@ -492,7 +491,6 @@ void buscar_mvp(Iprimary *iprimary, Imvp *imvp, char mvp[], int nregistros) {
 	if (flag) {
 		printf(REGISTRO_N_ENCONTRADO);
 	}
-	free(no);
 }
 
 void criar_iprimary(Iprimary *iprimary, int nregistros, int ordem) {
@@ -510,7 +508,6 @@ void criar_iprimary(Iprimary *iprimary, int nregistros, int ordem) {
 		aux.rrn = i;
 		insere(iprimary, &aux);
 		i+= 192;
-        preordem(&iprimary->raiz, 1);
 	}
 
 }
@@ -608,6 +605,7 @@ int validaData(const char string[]){
 
 int validaDuracao(const char string[]){
     char *minuto, *segundo, *duracao;
+	long minutoNum, segundoNum;
 
     duracao = malloc(sizeof(string));
     strcpy(duracao, string);
@@ -617,7 +615,16 @@ int validaDuracao(const char string[]){
 
     if(strlen(minuto) != 2 || strlen(segundo) != 2){
         return 0;
-    }
+    } else if (minuto[0] < '0' || minuto[0] > '9' || minuto[1] < '0' || minuto[1] > '9' || segundo[0] < '0' || segundo[0] > '9' || segundo[1] < '0' || segundo[1] > '9') {
+		return 0;
+	}
+
+	minutoNum = strtol(minuto, NULL, 10);
+	segundoNum = strtol(segundo, NULL, 10);
+
+	if (minutoNum < 0 || minutoNum > 99 || segundoNum < 0 || segundoNum > 59) {
+		return 0;
+	}
 
     return 1;
 }
@@ -778,11 +785,11 @@ void cadastrar(Iprimary *iprimary, Iwinner *iwinner, Imvp *imvp, int *nregistros
 
 void alterar(Iprimary iprimary) {
 	char *buffer, duracao[TAM_DURACAO], pk[TAM_PRIMARY_KEY];
-	int i;
+	int i, j = 0;
 	node_Btree *no;
 
-	scanf("%[^\n]%*c", pk);
-
+    scanf("%[^\n]", pk);
+    ignore();
 	no = (node_Btree *) malloc(sizeof(node_Btree));
 	no = buscar_arvore(&iprimary.raiz, pk, 0);
 	if (no != NULL) {
@@ -794,13 +801,18 @@ void alterar(Iprimary iprimary) {
 		for (i = 0; i < no->num_chaves; i++) {
 			if (strcmp(pk, no->chave[i].pk) == 0) {
 				buffer = ARQUIVO + no->chave[i].rrn;
+                while (j < 4) {
+                    if (*buffer == '@') {
+                        j++;
+                    }
+                    buffer++;
+                }
 				strncpy(buffer, duracao, 5);
 			}
 		}
 	} else {
 		printf(REGISTRO_N_ENCONTRADO);
 	}
-	free(no);
 }
 
 void buscar(Iprimary iprimary, Iwinner *iwinner, Imvp *imvp, int nregistros) {
@@ -811,7 +823,8 @@ void buscar(Iprimary iprimary, Iwinner *iwinner, Imvp *imvp, int nregistros) {
 	scanf("%d", &opcao);
 	switch (opcao) {
 		case 1:
-			scanf("%[^\n]%*c", pk);
+            ignore();
+            scanf("%[^\n]", pk);
 			printf(NOS_PERCORRIDOS, pk);
 			no = (node_Btree *) malloc(sizeof(node_Btree));
 			no = buscar_arvore(&iprimary.raiz, pk, 1);
@@ -825,17 +838,19 @@ void buscar(Iprimary iprimary, Iwinner *iwinner, Imvp *imvp, int nregistros) {
 			} else {
 				printf(REGISTRO_N_ENCONTRADO);
 			}
-			free(no);
 			break;
 		case 2:
-			scanf("%[^\n]%*c", vencedor);
+            ignore();
+            scanf("%[^\n]", vencedor);
 			buscar_vencedor(&iprimary, iwinner, vencedor, nregistros);
 			break;
 		case 3:
-			scanf("%[^\n]%*c", mvp);
+            ignore();
+            scanf("%[^\n]", mvp);
 			buscar_mvp(&iprimary, imvp, mvp, nregistros);
 			break;
 		default:
+            ignore();
 			printf(OPCAO_INVALIDA);
 			break;
 	}
@@ -902,6 +917,7 @@ void listar(Iprimary iprimary, Iwinner *iwinner, Imvp *imvp, int nregistros) {
 			}
 			break;
 		default:
+            ignore();
 			printf(OPCAO_INVALIDA);
 			break;
 	}
