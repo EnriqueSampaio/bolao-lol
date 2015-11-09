@@ -93,8 +93,8 @@ Partida recuperar_registro(int rrn);
 /* Retorna o número primo maior e mais próximo ou igual a tam */
 int prox_primo(int tam);
 
-/* Realiza o reespalhamento linear em caso de colisão na tabela Hash. Caso a tabela esteja cheia, retorna -1 */
-int reespalhamento_linear(Hashtable tabela, int pos);
+/* Realiza o reespalhamento linear em caso de colisão na tabela Hash. Caso a tabela esteja cheia, retorna -1, -2 se a chave for repetida, ou a poisção para inserção caso seja possível, e registra o número de colisões */
+int reespalhamento_linear(Hashtable tabela, int pos, char pk[], int *colisao);
 
 /* Cria a tabela Hash*/
 void criar_tabela(Hashtable *tabela, int tam);
@@ -125,6 +125,9 @@ void criar_registro(Partida *p, char registro[]);
 
 /* Cadastra uma nova partida */
 void cadastrar(Hashtable *tabela);
+
+/* Retorna o rrn da chave buscada, ou -1 caso a chave não exista */
+int buscar_alterar(Hashtable tabela, char pk[]);
 
 /* Altera a duração de uma partida */
 void alterar(Hashtable tabela);
@@ -222,7 +225,7 @@ void carregar_arquivo() {
 	scanf("%[^\n]\n", ARQUIVO);
 }
 
-/* Exibe a partida */
+/* Exibe o jogador */
 void exibir_registro(int rrn) {
 
 	Partida j = recuperar_registro(rrn);
@@ -281,8 +284,8 @@ void criar_tabela(Hashtable *tabela, int tam) {
 	}
 }
 
-/* Realiza o reespalhamento linear em caso de colisão na tabela Hash. Caso a tabela esteja cheia, retorna -1, e caso o elemento seja repetido, retorna -2 */
-int reespalhamento_linear(Hashtable tabela, int pos, char pk[]) {
+/* Realiza o reespalhamento linear em caso de colisão na tabela Hash. Caso a tabela esteja cheia, retorna -1, -2 se a chave for repetida, ou a poisção para inserção caso seja possível, e registra o número de colisões */
+int reespalhamento_linear(Hashtable tabela, int pos, char pk[], int *colisao) {
 	int i;
 
 	if (pos == tabela.tam - 1) {
@@ -292,6 +295,7 @@ int reespalhamento_linear(Hashtable tabela, int pos, char pk[]) {
 	}
 
 	while (tabela.v[i].estado == OCUPADO) {
+		*colisao = *colisao + 1;
 		if (i == tabela.tam - 1) {
 			i = 0;
 		} else if (i == pos) {
@@ -313,7 +317,7 @@ int gerar_hash(int tam, char pk[]) {
 
 /* Insere novo elemento na tabela Hash e retorna o número de colisões, -1 caso a tabela esteja cheia ou -2 se o elemento for repetido */
 int inserir_tabela(Hashtable *tabela, char pk[], int rrn) {
-	int pos;
+	int colisao = 0, pos;
 
 	pos = gerar_hash(tabela->tam, pk);
 
@@ -325,18 +329,21 @@ int inserir_tabela(Hashtable *tabela, char pk[], int rrn) {
 		if (strcmp(pk, tabela->v[pos].pk) == 0) {
 			return -2;
 		} else {
-			pos = reespalhamento_linear(*tabela, pos);
-			if (pos != -1) {
+			colisao = 1;
+			pos = reespalhamento_linear(*tabela, pos, pk, &colisao);
+			if (pos == -2) {
+				return -2;
+			} else if (pos == -1) {
+				return -1;
+			} else {
 				tabela->v[pos].estado = OCUPADO;
 				tabela->v[pos].rrn = rrn;
 				strcpy(tabela->v[pos].pk, pk);
-			} else {
-				return -1;
 			}
 		}
 	}
 
-	return 1;
+	return colisao;
 }
 
 /* Carrega a tabela Hash com os dados da string que simula o arquivo de dados */
@@ -378,7 +385,7 @@ int validar_data(const char string[]) {
     char *dia, *mes, *ano, *data;
     long diaNum, mesNum, anoNum;
 
-    data = malloc(sizeof(string));
+    data = (char *) malloc(TAM_DATA * sizeof(char));
     strcpy(data, string);
 
     dia = strtok(data, "/");
@@ -405,7 +412,7 @@ int validar_duracao(const char string[]) {
     char *minuto, *segundo, *duracao;
 	long minutoNum, segundoNum;
 
-    duracao = malloc(sizeof(string));
+    duracao = (char *) malloc(TAM_DURACAO * sizeof(char));
     strcpy(duracao, string);
 
     minuto = strtok(duracao, ":");
@@ -496,8 +503,7 @@ void criar_registro(Partida *p, char registro[]) {
 void cadastrar(Hashtable *tabela) {
 	Partida p;
     char registro[TAM_REGISTRO + 1], *buffer;
-	Chave chave;
-	int i, j;
+	int colisao;
 
     registro[0] = '\0';
 
@@ -517,21 +523,18 @@ void cadastrar(Hashtable *tabela) {
     }
 
     meu_get(p.vencedor, CAMPO_INVALIDO, TAM_EQUIPE - 1);
-
     while (strcmp(p.vencedor, p.equipe_azul) != 0 && strcmp(p.vencedor, p.equipe_vermelha) != 0) {
         printf("%s", CAMPO_INVALIDO);
         meu_get(p.vencedor, CAMPO_INVALIDO, TAM_EQUIPE - 1);
     }
 
     meu_get(p.placar1, CAMPO_INVALIDO, TAM_PLACAR - 1);
-
     while (!validar_placar(p.placar1)) {
         printf("%s", CAMPO_INVALIDO);
         meu_get(p.placar1, CAMPO_INVALIDO, TAM_PLACAR - 1);
     }
 
     meu_get(p.placar2, CAMPO_INVALIDO, TAM_PLACAR - 1);
-
     while (!validar_placar(p.placar2)) {
         printf("%s", CAMPO_INVALIDO);
         meu_get(p.placar2, CAMPO_INVALIDO, TAM_PLACAR - 1);
@@ -540,21 +543,130 @@ void cadastrar(Hashtable *tabela) {
     meu_get(p.mvp, CAMPO_INVALIDO, TAM_MVP - 1);
     gerar_pk(&p);
 
-    if(verificar_chave(iprimary, p.pk)) {
+    if((colisao = inserir_tabela(tabela, p.pk, strlen(ARQUIVO))) >= 0) {
         criar_registro(&p, registro);
 		buffer = ARQUIVO + strlen(ARQUIVO);
 		sprintf(buffer, "%s", registro);
-		strcpy(chave.pk, p.pk);
-		chave.rrn = *nregistros * 192;
-		insere(iprimary, &chave);
+		printf(REGISTRO_INSERIDO, p.pk, colisao);
+    } else if (colisao == -1) {
+    	printf(ERRO_TABELA_CHEIA);
     } else {
         printf(ERRO_PK_REPETIDA, p.pk);
     }
 }
 
+/* Cadastra uma nova partida */
+// void cadastrar(Hashtable *tabela) {
+// 	Partida p;
+//     char registro[TAM_REGISTRO + 1], *buffer;
+// 	int colisao;
+//
+//     registro[0] = '\0';
+//
+//     meu_get(p.equipe_azul, CAMPO_INVALIDO, TAM_EQUIPE - 1);
+//     meu_get(p.equipe_vermelha, CAMPO_INVALIDO, TAM_EQUIPE - 1);
+//
+//     meu_get(p.data_partida, CAMPO_INVALIDO, TAM_DATA - 1);
+//     while (!validar_data(p.data_partida)) {
+//         printf("%s", CAMPO_INVALIDO);
+//         meu_get(p.data_partida, CAMPO_INVALIDO, TAM_DATA - 1);
+//     }
+//
+//     meu_get(p.duracao, CAMPO_INVALIDO, TAM_DURACAO - 1);
+//     while (!validar_duracao(p.duracao)) {
+//         printf("%s", CAMPO_INVALIDO);
+//         meu_get(p.duracao, CAMPO_INVALIDO, TAM_DURACAO - 1);
+//     }
+//
+//     meu_get(p.vencedor, CAMPO_INVALIDO, TAM_EQUIPE - 1);
+//     while (strcmp(p.vencedor, p.equipe_azul) != 0 && strcmp(p.vencedor, p.equipe_vermelha) != 0) {
+//         printf("%s", CAMPO_INVALIDO);
+//         meu_get(p.vencedor, CAMPO_INVALIDO, TAM_EQUIPE - 1);
+//     }
+//
+//     meu_get(p.placar1, CAMPO_INVALIDO, TAM_PLACAR - 1);
+//     while (!validar_placar(p.placar1)) {
+//         printf("%s", CAMPO_INVALIDO);
+//         meu_get(p.placar1, CAMPO_INVALIDO, TAM_PLACAR - 1);
+//     }
+//
+//     meu_get(p.placar2, CAMPO_INVALIDO, TAM_PLACAR - 1);
+//     while (!validar_placar(p.placar2)) {
+//         printf("%s", CAMPO_INVALIDO);
+//         meu_get(p.placar2, CAMPO_INVALIDO, TAM_PLACAR - 1);
+//     }
+//
+//     meu_get(p.mvp, CAMPO_INVALIDO, TAM_MVP - 1);
+//     gerar_pk(&p);
+//
+//     if((colisao = inserir_tabela(tabela, p.pk, strlen(ARQUIVO))) >= 0) {
+//         criar_registro(&p, registro);
+// 		buffer = ARQUIVO + strlen(ARQUIVO);
+// 		sprintf(buffer, "%s", registro);
+// 		printf(REGISTRO_INSERIDO, p.pk, colisao);
+//     } else if (colisao == -1) {
+//     	printf(ERRO_TABELA_CHEIA);
+//     } else {
+//         printf(ERRO_PK_REPETIDA, p.pk);
+//     }
+// }
+
+/* Retorna o rrn da chave buscada, ou -1 caso a chave não exista */
+int buscar_alterar(Hashtable tabela, char pk[]) {
+	int i, pos;
+
+	i = pos = gerar_hash(tabela.tam, pk);
+
+	if (strcmp(pk, tabela.v[i].pk) == 0) {
+		return tabela.v[i].rrn;
+	} else {
+		if (i == tabela.tam - 1) {
+			i = 0;
+		} else {
+			i++;
+		}
+
+		while (strcmp(pk, tabela.v[i].pk) != 0) {
+			if (i == tabela.tam - 1) {
+				i = 0;
+			} else if (i == pos) {
+				return -1;
+			} else {
+				i++;
+			}
+		}
+
+		return tabela.v[i].rrn;
+	}
+}
+
 /* Altera a duração de uma partida */
 void alterar(Hashtable tabela) {
-	//IMPLEMENTAR
+	char *buffer, duracao[TAM_DURACAO], pk[TAM_PRIMARY_KEY];
+	int i = 0, rrn;
+
+    scanf("%[^\n]", pk);
+    ignore();
+
+	rrn = buscar_alterar(tabela, pk);
+
+	if (rrn != -1) {
+		meu_get(duracao, CAMPO_INVALIDO, TAM_DURACAO - 1);
+	    while (!validar_duracao(duracao)) {
+	        printf("%s", CAMPO_INVALIDO);
+	        meu_get(duracao, CAMPO_INVALIDO, TAM_DURACAO - 1);
+	    }
+		buffer = ARQUIVO + rrn;
+        while (i < 4) {
+            if (*buffer == '@') {
+                i++;
+            }
+            buffer++;
+        }
+		strncpy(buffer, duracao, TAM_DURACAO - 1);
+	} else {
+		printf(REGISTRO_N_ENCONTRADO);
+	}
 }
 
 /* Busca por uma partida na tabela Hash através de uma chave primária recebida */
@@ -563,7 +675,7 @@ void buscar(Hashtable tabela) {
 	int i, pos;
 
 	scanf("%[^\n]", pk);
-	getchar();
+	ignore();
 
 	i = pos = gerar_hash(tabela.tam, pk);
 
@@ -597,14 +709,17 @@ void remover(Hashtable *tabela) {
 	char *buffer, pk[TAM_PRIMARY_KEY];
 	int i, pos;
 
-	scanf("%[^\n]", pk);
 	getchar();
+	scanf("%[^\n]", pk);
+	ignore();
 
 	i = pos = gerar_hash(tabela->tam, pk);
 
-	if (strcmp(pk, tabela->v[i].pk) == 0) {
+	if (strcmp(pk, tabela->v[i].pk) == 0 && tabela->v[i].estado == OCUPADO) {
 		buffer = ARQUIVO + tabela->v[i].rrn;
-		strcpy(buffer, "*|");
+		strncpy(buffer, "*|", 2);
+
+		tabela->v[pos].estado = REMOVIDO;
 	} else {
 		if (i == tabela->tam - 1) {
 			i = 0;
@@ -612,7 +727,7 @@ void remover(Hashtable *tabela) {
 			i++;
 		}
 
-		while (strcmp(pk, tabela->v[i].pk) != 0) {
+		while (strcmp(pk, tabela->v[i].pk) != 0 || tabela->v[i].estado != OCUPADO) {
 			if (i == tabela->tam - 1) {
 				i = 0;
 			} else if (i == pos) {
@@ -624,7 +739,8 @@ void remover(Hashtable *tabela) {
 		}
 
 		buffer = ARQUIVO + tabela->v[i].rrn;
-		strcpy(buffer, "*|");
+		strncpy(buffer, "*|", 2);
+		tabela->v[i].estado = REMOVIDO;
 	}
 }
 
