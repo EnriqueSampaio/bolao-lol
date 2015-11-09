@@ -330,28 +330,6 @@ void carregar_tabela(Hashtable *tabela) {
 	}
 }
 
-/* Função própria para receber dados até encontrar uma quebra de linha, exibindo um erro caso a entrada seja maior que o especificado */
-void meu_get(char string[], char erro[], int limite) {
-    char c;
-    int i, flag = 0;
-
-    do {
-        if (flag) {
-            printf("%s", erro);
-        }
-        flag = 0;
-        scanf("%c", &c);
-        for (i = 0; c != '\n'; i++) {
-            string[i] = c;
-            scanf("%c", &c);
-            if(i >= limite){
-                flag = 1;
-            }
-        }
-    } while(flag);
-    string[i] = '\0';
-}
-
 /* Valida se a data foi inserida corretamente */
 int validar_data(const char string[]) {
     char *dia, *mes, *ano, *data;
@@ -680,29 +658,24 @@ void buscar(Hashtable tabela) {
 
 	i = pos = gerar_hash(tabela.tam, pk);
 
-	if (strcmp(pk, tabela.v[i].pk) == 0) {
+	if (strcmp(pk, tabela.v[i].pk) == 0 && tabela.v[i].estado == OCUPADO) {
 		exibir_registro(tabela.v[i].rrn);
 	} else {
-		if (i == tabela.tam - 1) {
-			i = 0;
-		} else {
-			i++;
-		}
-
-		while (strcmp(pk, tabela.v[i].pk) != 0) {
+		while (strcmp(pk, tabela.v[i].pk) != 0 || tabela.v[i].estado == LIVRE || tabela.v[i].estado == REMOVIDO) {
 			if (i == tabela.tam - 1) {
 				i = 0;
-			} else if (i == pos) {
-				printf(REGISTRO_N_ENCONTRADO);
-				return;
 			} else {
 				i++;
+			}
+
+			if (i == pos) {
+				printf(REGISTRO_N_ENCONTRADO);
+				return;
 			}
 		}
 
 		exibir_registro(tabela.v[i].rrn);
 	}
-
 }
 
 /* Remove uma partida, marcando como removida na tabela Hash e no arquivo de dados */
