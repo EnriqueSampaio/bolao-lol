@@ -93,9 +93,6 @@ Partida recuperar_registro(int rrn);
 /* Retorna o número primo maior e mais próximo ou igual a tam */
 int prox_primo(int tam);
 
-/* Realiza o reespalhamento linear em caso de colisão na tabela Hash. Caso a tabela esteja cheia, retorna -1, -2 se a chave for repetida, ou a poisção para inserção caso seja possível, e registra o número de colisões */
-int reespalhamento_linear(Hashtable tabela, int pos, char pk[], int *colisao);
-
 /* Cria a tabela Hash*/
 void criar_tabela(Hashtable *tabela, int tam);
 
@@ -284,32 +281,6 @@ void criar_tabela(Hashtable *tabela, int tam) {
 	}
 }
 
-/* Realiza o reespalhamento linear em caso de colisão na tabela Hash. Caso a tabela esteja cheia, retorna -1, -2 se a chave for repetida, ou a poisção para inserção caso seja possível, e registra o número de colisões */
-int reespalhamento_linear(Hashtable tabela, int pos, char pk[], int *colisao) {
-	int i;
-
-	if (pos == tabela.tam - 1) {
-		i = 0;
-	} else {
-		i = pos + 1;
-	}
-
-	while (tabela.v[i].estado == OCUPADO) {
-		*colisao = *colisao + 1;
-		if (i == tabela.tam - 1) {
-			i = 0;
-		} else if (i == pos) {
-			return -1;
-		} else if (strcmp(pk, tabela.v[i].pk) == 0) {
-			return -2;
-		} else {
-			i++;
-		}
-	}
-
-	return i;
-}
-
 /* Gera a hash */
 int gerar_hash(int tam, char pk[]) {
 	return (pk[0] * 1 + pk[1] * 2 + pk[2] * 3 + pk[3] * 4 + pk[4] * 5 + pk[5] * 6 + pk[6] * 7 + pk[7] * 8) % tam;
@@ -317,32 +288,33 @@ int gerar_hash(int tam, char pk[]) {
 
 /* Insere novo elemento na tabela Hash e retorna o número de colisões, -1 caso a tabela esteja cheia ou -2 se o elemento for repetido */
 int inserir_tabela(Hashtable *tabela, char pk[], int rrn) {
-	int colisao = 0, pos;
+	int colisao = 0, i, pos;
 
-	pos = gerar_hash(tabela->tam, pk);
+	i = pos = gerar_hash(tabela->tam, pk);
 
-	if (tabela->v[pos].estado == LIVRE || tabela->v[pos].estado == REMOVIDO) {
-		tabela->v[pos].estado = OCUPADO;
-		tabela->v[pos].rrn = rrn;
-		strcpy(tabela->v[pos].pk, pk);
-	} else {
-		if (strcmp(pk, tabela->v[pos].pk) == 0) {
-			return -2;
+	if (strcmp(pk, tabela->v[i].pk) == 0) {
+		return -2;
+	}
+
+	while (tabela->v[i].estado == OCUPADO) {
+		colisao++;
+
+		if (i == tabela->tam - 1) {
+			i = 0;
 		} else {
-			colisao = 1;
-			pos = reespalhamento_linear(*tabela, pos, pk, &colisao);
-			if (pos == -2) {
-				return -2;
-			} else if (pos == -1) {
-				return -1;
-			} else {
-				tabela->v[pos].estado = OCUPADO;
-				tabela->v[pos].rrn = rrn;
-				strcpy(tabela->v[pos].pk, pk);
-			}
+			i++;
+		}
+
+		if (strcmp(pk, tabela->v[i].pk) == 0) {
+			return -2;
+		} else if (i == pos) {
+			return -1;
 		}
 	}
 
+	tabela->v[i].estado = OCUPADO;
+	tabela->v[i].rrn = rrn;
+	strcpy(tabela->v[i].pk, pk);
 	return colisao;
 }
 
@@ -410,7 +382,6 @@ int validar_data(const char string[]) {
 /* Valida se a duração foi inserida corretamente */
 int validar_duracao(const char string[]) {
     char *minuto, *segundo, *duracao;
-	long minutoNum, segundoNum;
 
     duracao = (char *) malloc(TAM_DURACAO * sizeof(char));
     strcpy(duracao, string);
@@ -423,13 +394,6 @@ int validar_duracao(const char string[]) {
     } else if (minuto[0] < '0' || minuto[0] > '9' || minuto[1] < '0' || minuto[1] > '9' || segundo[0] < '0' || segundo[0] > '5' || segundo[1] < '0' || segundo[1] > '9') {
 		return 0;
 	}
-
-	// minutoNum = strtol(minuto, NULL, 10);
-	// segundoNum = strtol(segundo, NULL, 10);
-	//
-	// if (minutoNum < 0 || minutoNum > 99 || segundoNum < 0 || segundoNum > 59) {
-	// 	return 0;
-	// }
 
     return 1;
 }
@@ -508,74 +472,74 @@ void cadastrar(Hashtable *tabela) {
     registro[0] = '\0';
 
     scanf("%[^\n]", entrada);
-	getchar();
+	ignore();
 	while (strlen(entrada) > TAM_EQUIPE - 1) {
 		printf(CAMPO_INVALIDO);
 		scanf("%[^\n]", entrada);
-		getchar();
+		ignore();
 	}
 	strcpy(p.equipe_azul, entrada);
 
 	scanf("%[^\n]", entrada);
-	getchar();
+	ignore();
 	while (strlen(entrada) > TAM_EQUIPE - 1) {
 		printf(CAMPO_INVALIDO);
 		scanf("%[^\n]", entrada);
-		getchar();
+		ignore();
 	}
 	strcpy(p.equipe_vermelha, entrada);
 
 	scanf("%[^\n]", entrada);
-	getchar();
+	ignore();
 	while (strlen(entrada) > TAM_DATA - 1 || !validar_data(entrada)) {
 		printf(CAMPO_INVALIDO);
 		scanf("%[^\n]", entrada);
-		getchar();
+		ignore();
 	}
 	strcpy(p.data_partida, entrada);
 
 	scanf("%[^\n]", entrada);
-	getchar();
+	ignore();
 	while (strlen(entrada) > TAM_DURACAO - 1 || !validar_duracao(entrada)) {
 		printf(CAMPO_INVALIDO);
 		scanf("%[^\n]", entrada);
-		getchar();
+		ignore();
 	}
 	strcpy(p.duracao, entrada);
 
 	scanf("%[^\n]", entrada);
-	getchar();
+	ignore();
 	while (strlen(entrada) > TAM_EQUIPE - 1 || (strcmp(entrada, p.equipe_azul) != 0 && strcmp(entrada, p.equipe_vermelha))) {
 		printf(CAMPO_INVALIDO);
 		scanf("%[^\n]", entrada);
-		getchar();
+		ignore();
 	}
 	strcpy(p.vencedor, entrada);
 
 	scanf("%[^\n]", entrada);
-	getchar();
+	ignore();
 	while (strlen(entrada) > TAM_PLACAR - 1 || !validar_placar(entrada)) {
 		printf(CAMPO_INVALIDO);
 		scanf("%[^\n]", entrada);
-		getchar();
+		ignore();
 	}
 	strcpy(p.placar1, entrada);
 
 	scanf("%[^\n]", entrada);
-	getchar();
+	ignore();
 	while (strlen(entrada) > TAM_PLACAR - 1 || !validar_placar(entrada)) {
 		printf(CAMPO_INVALIDO);
 		scanf("%[^\n]", entrada);
-		getchar();
+		ignore();
 	}
 	strcpy(p.placar2, entrada);
 
 	scanf("%[^\n]", entrada);
-	getchar();
+	ignore();
 	while (strlen(entrada) > TAM_EQUIPE - 1) {
 		printf(CAMPO_INVALIDO);
 		scanf("%[^\n]", entrada);
-		getchar();
+		ignore();
 	}
 	strcpy(p.mvp, entrada);
     gerar_pk(&p);
