@@ -420,16 +420,16 @@ int validar_duracao(const char string[]) {
 
     if(strlen(minuto) != 2 || strlen(segundo) != 2){
         return 0;
-    } else if (minuto[0] < '0' || minuto[0] > '9' || minuto[1] < '0' || minuto[1] > '9' || segundo[0] < '0' || segundo[0] > '9' || segundo[1] < '0' || segundo[1] > '9') {
+    } else if (minuto[0] < '0' || minuto[0] > '9' || minuto[1] < '0' || minuto[1] > '9' || segundo[0] < '0' || segundo[0] > '5' || segundo[1] < '0' || segundo[1] > '9') {
 		return 0;
 	}
 
-	minutoNum = strtol(minuto, NULL, 10);
-	segundoNum = strtol(segundo, NULL, 10);
-
-	if (minutoNum < 0 || minutoNum > 99 || segundoNum < 0 || segundoNum > 59) {
-		return 0;
-	}
+	// minutoNum = strtol(minuto, NULL, 10);
+	// segundoNum = strtol(segundo, NULL, 10);
+	//
+	// if (minutoNum < 0 || minutoNum > 99 || segundoNum < 0 || segundoNum > 59) {
+	// 	return 0;
+	// }
 
     return 1;
 }
@@ -502,45 +502,82 @@ void criar_registro(Partida *p, char registro[]) {
 /* Cadastra uma nova partida */
 void cadastrar(Hashtable *tabela) {
 	Partida p;
-    char registro[TAM_REGISTRO + 1], *buffer;
+    char registro[TAM_REGISTRO + 1], entrada[TAM_EQUIPE], *buffer;
 	int colisao;
 
     registro[0] = '\0';
 
-    meu_get(p.equipe_azul, CAMPO_INVALIDO, TAM_EQUIPE - 1);
-    meu_get(p.equipe_vermelha, CAMPO_INVALIDO, TAM_EQUIPE - 1);
+    scanf("%[^\n]", entrada);
+	getchar();
+	while (strlen(entrada) > TAM_EQUIPE - 1) {
+		printf(CAMPO_INVALIDO);
+		scanf("%[^\n]", entrada);
+		getchar();
+	}
+	strcpy(p.equipe_azul, entrada);
 
-    meu_get(p.data_partida, CAMPO_INVALIDO, TAM_DATA - 1);
-    while (!validar_data(p.data_partida)) {
-        printf("%s", CAMPO_INVALIDO);
-        meu_get(p.data_partida, CAMPO_INVALIDO, TAM_DATA - 1);
-    }
+	scanf("%[^\n]", entrada);
+	getchar();
+	while (strlen(entrada) > TAM_EQUIPE - 1) {
+		printf(CAMPO_INVALIDO);
+		scanf("%[^\n]", entrada);
+		getchar();
+	}
+	strcpy(p.equipe_vermelha, entrada);
 
-    meu_get(p.duracao, CAMPO_INVALIDO, TAM_DURACAO - 1);
-    while (!validar_duracao(p.duracao)) {
-        printf("%s", CAMPO_INVALIDO);
-        meu_get(p.duracao, CAMPO_INVALIDO, TAM_DURACAO - 1);
-    }
+	scanf("%[^\n]", entrada);
+	getchar();
+	while (strlen(entrada) > TAM_DATA - 1 || !validar_data(entrada)) {
+		printf(CAMPO_INVALIDO);
+		scanf("%[^\n]", entrada);
+		getchar();
+	}
+	strcpy(p.data_partida, entrada);
 
-    meu_get(p.vencedor, CAMPO_INVALIDO, TAM_EQUIPE - 1);
-    while (strcmp(p.vencedor, p.equipe_azul) != 0 && strcmp(p.vencedor, p.equipe_vermelha) != 0) {
-        printf("%s", CAMPO_INVALIDO);
-        meu_get(p.vencedor, CAMPO_INVALIDO, TAM_EQUIPE - 1);
-    }
+	scanf("%[^\n]", entrada);
+	getchar();
+	while (strlen(entrada) > TAM_DURACAO - 1 || !validar_duracao(entrada)) {
+		printf(CAMPO_INVALIDO);
+		scanf("%[^\n]", entrada);
+		getchar();
+	}
+	strcpy(p.duracao, entrada);
 
-    meu_get(p.placar1, CAMPO_INVALIDO, TAM_PLACAR - 1);
-    while (!validar_placar(p.placar1)) {
-        printf("%s", CAMPO_INVALIDO);
-        meu_get(p.placar1, CAMPO_INVALIDO, TAM_PLACAR - 1);
-    }
+	scanf("%[^\n]", entrada);
+	getchar();
+	while (strlen(entrada) > TAM_EQUIPE - 1 || (strcmp(entrada, p.equipe_azul) != 0 && strcmp(entrada, p.equipe_vermelha))) {
+		printf(CAMPO_INVALIDO);
+		scanf("%[^\n]", entrada);
+		getchar();
+	}
+	strcpy(p.vencedor, entrada);
 
-    meu_get(p.placar2, CAMPO_INVALIDO, TAM_PLACAR - 1);
-    while (!validar_placar(p.placar2)) {
-        printf("%s", CAMPO_INVALIDO);
-        meu_get(p.placar2, CAMPO_INVALIDO, TAM_PLACAR - 1);
-    }
+	scanf("%[^\n]", entrada);
+	getchar();
+	while (strlen(entrada) > TAM_PLACAR - 1 || !validar_placar(entrada)) {
+		printf(CAMPO_INVALIDO);
+		scanf("%[^\n]", entrada);
+		getchar();
+	}
+	strcpy(p.placar1, entrada);
 
-    meu_get(p.mvp, CAMPO_INVALIDO, TAM_MVP - 1);
+	scanf("%[^\n]", entrada);
+	getchar();
+	while (strlen(entrada) > TAM_PLACAR - 1 || !validar_placar(entrada)) {
+		printf(CAMPO_INVALIDO);
+		scanf("%[^\n]", entrada);
+		getchar();
+	}
+	strcpy(p.placar2, entrada);
+
+	scanf("%[^\n]", entrada);
+	getchar();
+	while (strlen(entrada) > TAM_EQUIPE - 1) {
+		printf(CAMPO_INVALIDO);
+		scanf("%[^\n]", entrada);
+		getchar();
+	}
+	strcpy(p.mvp, entrada);
     gerar_pk(&p);
 
     if((colisao = inserir_tabela(tabela, p.pk, strlen(ARQUIVO))) >= 0) {
