@@ -102,9 +102,6 @@ int inserir_tabela(Hashtable *tabela, char pk[], int rrn);
 /* Carrega a tabela Hash com os dados da string que simula o arquivo de dados */
 void carregar_tabela(Hashtable *tabela);
 
-/* Função própria para receber dados até encontrar uma quebra de linha, exibindo um erro caso a entrada seja maior que o especificado */
-void meu_get(char string[], char erro[], int limite);
-
 /* Valida se a data foi inserida corretamente */
 int validar_data(const char string[]);
 
@@ -534,62 +531,6 @@ void cadastrar(Hashtable *tabela) {
     }
 }
 
-/* Cadastra uma nova partida */
-// void cadastrar(Hashtable *tabela) {
-// 	Partida p;
-//     char registro[TAM_REGISTRO + 1], *buffer;
-// 	int colisao;
-//
-//     registro[0] = '\0';
-//
-//     meu_get(p.equipe_azul, CAMPO_INVALIDO, TAM_EQUIPE - 1);
-//     meu_get(p.equipe_vermelha, CAMPO_INVALIDO, TAM_EQUIPE - 1);
-//
-//     meu_get(p.data_partida, CAMPO_INVALIDO, TAM_DATA - 1);
-//     while (!validar_data(p.data_partida)) {
-//         printf("%s", CAMPO_INVALIDO);
-//         meu_get(p.data_partida, CAMPO_INVALIDO, TAM_DATA - 1);
-//     }
-//
-//     meu_get(p.duracao, CAMPO_INVALIDO, TAM_DURACAO - 1);
-//     while (!validar_duracao(p.duracao)) {
-//         printf("%s", CAMPO_INVALIDO);
-//         meu_get(p.duracao, CAMPO_INVALIDO, TAM_DURACAO - 1);
-//     }
-//
-//     meu_get(p.vencedor, CAMPO_INVALIDO, TAM_EQUIPE - 1);
-//     while (strcmp(p.vencedor, p.equipe_azul) != 0 && strcmp(p.vencedor, p.equipe_vermelha) != 0) {
-//         printf("%s", CAMPO_INVALIDO);
-//         meu_get(p.vencedor, CAMPO_INVALIDO, TAM_EQUIPE - 1);
-//     }
-//
-//     meu_get(p.placar1, CAMPO_INVALIDO, TAM_PLACAR - 1);
-//     while (!validar_placar(p.placar1)) {
-//         printf("%s", CAMPO_INVALIDO);
-//         meu_get(p.placar1, CAMPO_INVALIDO, TAM_PLACAR - 1);
-//     }
-//
-//     meu_get(p.placar2, CAMPO_INVALIDO, TAM_PLACAR - 1);
-//     while (!validar_placar(p.placar2)) {
-//         printf("%s", CAMPO_INVALIDO);
-//         meu_get(p.placar2, CAMPO_INVALIDO, TAM_PLACAR - 1);
-//     }
-//
-//     meu_get(p.mvp, CAMPO_INVALIDO, TAM_MVP - 1);
-//     gerar_pk(&p);
-//
-//     if((colisao = inserir_tabela(tabela, p.pk, strlen(ARQUIVO))) >= 0) {
-//         criar_registro(&p, registro);
-// 		buffer = ARQUIVO + strlen(ARQUIVO);
-// 		sprintf(buffer, "%s", registro);
-// 		printf(REGISTRO_INSERIDO, p.pk, colisao);
-//     } else if (colisao == -1) {
-//     	printf(ERRO_TABELA_CHEIA);
-//     } else {
-//         printf(ERRO_PK_REPETIDA, p.pk);
-//     }
-// }
-
 /* Retorna o rrn da chave buscada, ou -1 caso a chave não exista */
 int buscar_alterar(Hashtable tabela, char pk[]) {
 	int i, pos;
@@ -621,7 +562,7 @@ int buscar_alterar(Hashtable tabela, char pk[]) {
 
 /* Altera a duração de uma partida */
 void alterar(Hashtable tabela) {
-	char *buffer, duracao[TAM_DURACAO], pk[TAM_PRIMARY_KEY];
+	char *buffer, duracao[TAM_DURACAO], entrada[TAM_EQUIPE], pk[TAM_PRIMARY_KEY];
 	int i = 0, rrn;
 
     scanf("%[^\n]", pk);
@@ -630,11 +571,14 @@ void alterar(Hashtable tabela) {
 	rrn = buscar_alterar(tabela, pk);
 
 	if (rrn != -1) {
-		meu_get(duracao, CAMPO_INVALIDO, TAM_DURACAO - 1);
-	    while (!validar_duracao(duracao)) {
-	        printf("%s", CAMPO_INVALIDO);
-	        meu_get(duracao, CAMPO_INVALIDO, TAM_DURACAO - 1);
-	    }
+		scanf("%[^\n]", entrada);
+		ignore();
+		while (strlen(entrada) > TAM_DURACAO - 1 || !validar_duracao(entrada)) {
+			printf(CAMPO_INVALIDO);
+			scanf("%[^\n]", entrada);
+			ignore();
+		}
+		strcpy(duracao, entrada);
 		buffer = ARQUIVO + rrn;
         while (i < 4) {
             if (*buffer == '@') {
