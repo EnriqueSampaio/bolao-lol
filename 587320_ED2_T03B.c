@@ -80,8 +80,35 @@ void carregar_arquivo();
 /* Exibe o jogador */
 void exibir_registro(int rrn);
 
-/* <<< DECLARE AQUI OS PROTOTIPOS >>> */
+/* Recupera um registro do arquivo de dados, dado um RRN */
+Partida recuperar_registro(int rrn);
 
+/* Retorna o número primo maior e mais próximo ou igual a tam */
+int prox_primo(int tam);
+
+/* Cria a tabela Hash*/
+void criar_tabela(Hashtable *tabela, int tam);
+
+/* Carrega a tabela Hash com os dados da string que simula o arquivo de dados */
+void carregar_tabela(Hashtable *tabela);
+
+/* Cadastra uma nova partida */
+void cadastrar(Hashtable *tabela);
+
+/* Altera a duração de uma partida */
+void alterar(Hashtable tabela);
+
+/* Busca por uma partida na tabela Hash através de uma chave primária recebida */
+void buscar(Hashtable tabela);
+
+/* Remove uma partida, marcando como removida na tabela Hash e no arquivo de dados */
+void remover(Hashtable *tabela);
+
+/* Imprime os dados da tabela Hash */
+void imprimir_tabela(Hashtable tabela);
+
+/* Libera a memória ocupada pela tabela Hash antes de finalizar o programa */
+void liberar_tabela(Hashtable *tabela);
 
 /* ==========================================================================
  * ============================ FUNÇÃO PRINCIPAL ============================
@@ -181,6 +208,72 @@ void exibir_registro(int rrn) {
 	printf("\n");
 }
 
+/* Recupera um registro do arquivo de dados, dado um RRN */
+Partida recuperar_registro(int rrn) {
+	char *buffer;
+	Partida p;
 
-/* <<< IMPLEMENTE AQUI AS FUNCOES >>> */
+	buffer = ARQUIVO + rrn;
+	sscanf(buffer, "%[^@]%*c%[^@]%*c%[^@]%*c%[^@]%*c%[^@]%*c%[^@]%*c%[^@]%*c%[^@]%*c%[^@]%*c", p.pk, p.equipe_azul, p.equipe_vermelha, p.data_partida, p.duracao, p.vencedor, p.placar1, p.placar2, p.mvp);
+	return p;
+}
 
+/* Retorna o número primo maior e mais próximo ou igual a tam */
+int prox_primo(int tam) {
+	int i, j, flag = 1;
+
+	if (tam == 0 || tam == 1) {
+		return tam;
+	}
+
+	for (i = tam; flag ; i++) {
+		flag = 0;
+		for (j = 2; j < i; j++) {
+			if (i % j == 0) {
+				flag = 1;
+			}
+		}
+	}
+
+	return (i - 1);
+}
+
+/* Cria a tabela Hash*/
+void criar_tabela(Hashtable *tabela, int tam) {
+	//IMPLEMENTAR
+}
+
+/* Carrega a tabela Hash com os dados da string que simula o arquivo de dados */
+void carregar_tabela(Hashtable *tabela) {
+	//IMPLEMENTAR
+}
+
+/* Cadastra uma nova partida */
+void cadastrar(Hashtable *tabela) {
+	// IMPLEMENTAR
+}
+
+/* Altera a duração de uma partida */
+void alterar(Hashtable tabela) {
+	// IMPLEMENTAR
+}
+
+/* Busca por uma partida na tabela Hash através de uma chave primária recebida */
+void buscar(Hashtable tabela) {
+	// IMPLEMENTAR
+}
+
+/* Remove uma partida, marcando como removida na tabela Hash e no arquivo de dados */
+void remover(Hashtable *tabela) {
+	// IMPLEMENTAR
+}
+
+/* Imprime os dados da tabela Hash */
+void imprimir_tabela(Hashtable tabela) {
+	// IMPLEMENTAR
+}
+
+/* Libera a memória ocupada pela tabela Hash antes de finalizar o programa */
+void liberar_tabela(Hashtable *tabela) {
+	// IMPLEMENTAR
+}
